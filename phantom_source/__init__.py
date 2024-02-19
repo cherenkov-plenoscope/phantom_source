@@ -1,3 +1,4 @@
+from .version import __version__
 from . import light_field
 from . import plot
 from . import mesh

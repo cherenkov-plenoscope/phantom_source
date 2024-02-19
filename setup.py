@@ -1,22 +1,29 @@
 import setuptools
 import os
 
-with open("README.md", "r") as f:
+with open("README.rst", "r", encoding="utf-8") as f:
     long_description = f.read()
 
+
+with open(os.path.join("phantom_source", "version.py")) as f:
+    txt = f.read()
+    last_line = txt.splitlines()[-1]
+    version_string = last_line.split()[-1]
+    version = version_string.strip("\"'")
+
+
 setuptools.setup(
-    name="phantom_source",
-    version="0.1.1",
+    name="phantom_source_cherenkov-plenoscope-project",
+    version=version,
     description="Create light-fields of phantom-sources.",
     long_description=long_description,
-    url="https://github.com/cherenkov-plenoscope",
+    long_description_content_type="text/x-rst",
+    url="https://github.com/cherenkov-plenoscope/phantom_source",
     author="Sebastian Achim Mueller",
     author_email="sebastian-achim.mueller@mpi-hd.mpg.de",
-    license="MIT",
-    packages=[
-        "phantom_source",
-    ],
-    install_requires=[""],
+    packages=["phantom_source"],
+    install_requires=[],
+    package_data={},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
