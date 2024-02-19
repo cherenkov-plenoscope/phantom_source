@@ -1,64 +1,89 @@
 import numpy as np
+import sebastians_matplotlib_addons as sebplt
+from . import mesh as Mesh
 
 
-def ax3d_add_mesh(
-    ax3d, vertices, edges, color="b",
-):
-    for e in edges:
+def ax3d_add_mesh(ax3d, mesh, color="b"):
+    for e in mesh["edges"]:
+        start = mesh["vertices"][e[0]]
+        stop = mesh["vertices"][e[1]]
         ax3d.plot(
-            xs=[vertices[e[0], 0], vertices[e[1], 0]],
-            ys=[vertices[e[0], 1], vertices[e[1], 1]],
-            zs=[vertices[e[0], 2], vertices[e[1], 2]],
+            xs=[start[0], stop[0]],
+            ys=[start[1], stop[1]],
+            zs=[start[2], stop[2]],
             color=color,
         )
 
 
-def ax_add_mesh(
-    ax, vertices, edges, color="b",
-):
-    for e in edges:
+def ax_add_mesh(ax, mesh, color="b"):
+    for e in mesh["edges"]:
+        start = mesh["vertices"][e[0]]
+        stop = mesh["vertices"][e[1]]
         ax.plot(
-            [vertices[e[0], 0], vertices[e[1], 0]],
-            [vertices[e[0], 1], vertices[e[1], 1]],
+            [start[0], stop[0]],
+            [start[1], stop[1]],
             color=color,
         )
 
 
-def save_view(path, figsize=(12, 16), dpi=200, elev=5, azim=-45, zlabel=None):
-    fig = plt.figure(figsize=figsize, dpi=dpi)
+def ax3d_set_xyzlim(ax3d, xlim, ylim, zlim):
+    for x in xlim:
+        for y in ylim:
+            for z in zlim:
+                ax3d.plot(xs=[x], ys=[y], zs=[z])
+
+
+def ax3d_set_pane_colors(
+    ax3d,
+    x=(1.0, 1.0, 1.0, 1.0),
+    y=(1.0, 1.0, 1.0, 1.0),
+    z=(1.0, 1.0, 1.0, 1.0),
+):
+    ax3d.w_xaxis.set_pane_color(x)
+    ax3d.w_yaxis.set_pane_color(y)
+    ax3d.w_zaxis.set_pane_color(z)
+
+
+def save_3d_views_of_meshes(
+    meshes, scale, xlim, ylim, zlim, elevations, azimuths, paths
+):
+    Mscn_km = []
+    for mscn in meshes:
+        mscn_km = Mesh.scale(mesh=mscn, factor=scale)
+        Mscn_km.append(mscn_km)
+
+    fig = sebplt.figure(style={"rows": 2 * 1080, "cols": 1080, "fontsize": 1})
     ax3d = fig.add_subplot(111, projection="3d")
-    xy_radius = 0.4
-    max_object_distance = 25
-    ax3d_add_mesh(ax3d, triangle_vertices * 1e-3, triangle_edges, "k")
-    ax3d_add_mesh(ax3d, spiral_vertices * 1e-3, spiral_edges, "k")
-    ax3d_add_mesh(ax3d, sun_vertices * 1e-3, sun_edges, "k")
-    ax3d_add_mesh(ax3d, smiley_vertices * 1e-3, smiley_edges, "k")
-    ax3d_add_mesh(ax3d, cross_vertices * 1e-3, cross_edges, "k")
-    for x in [-1, 1]:
-        for y in [-1, 1]:
-            for z in [0, max_object_distance]:
-                ax3d.plot(xs=[x * xy_radius], ys=[y * xy_radius], zs=[z])
-    ax3d.set_xlabel(r"$x$/km")
-    ax3d.set_ylabel(r"$y$/km")
-    ax3d.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    ax3d.w_xaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    ax3d.w_zaxis.set_pane_color((1.0, 1.0, 1.0, 1.0))
-    if zlabel:
-        ax3d.set_zlabel(r"depth $g$/km")
-    else:
-        ax3d.set_zticks([])
-    ax3d.view_init(elev=elev, azim=azim)
-    fig.savefig(path)
+    for mscn_km in Mscn_km:
+        ax3d_add_mesh(ax3d=ax3d, mesh=mscn_km, color="k")
+    ax3d_set_xyzlim(
+        ax3d=ax3d,
+        xlim=np.array(xlim) * scale,
+        ylim=np.array(ylim) * scale,
+        zlim=np.array(zlim) * scale,
+    )
+    ax3d_set_pane_colors(
+        ax3d=ax3d,
+        x=(1.0, 1.0, 1.0, 1.0),
+        y=(1.0, 1.0, 1.0, 1.0),
+        z=(1.0, 1.0, 1.0, 1.0),
+    )
+
+    for i in range(len(paths)):
+        ax3d.view_init(elev=elevations[i], azim=azimuths[i])
+        fig.savefig(paths[i])
+
+    sebplt.close(fig)
 
 
-def save_projection(vertices, edges, path):
-    fig = plt.figure(figsize=(2, 1.75), dpi=400)
-    ax = fig.add_axes((0.3, 0.3, 0.7, 0.7))
-    ax_add_mesh(ax, vertices, edges, "k")
+def write_2d_view_of_meshes_to_path(meshes, path, mesh_colors=None):
+    if mesh_colors == None:
+        mesh_colors = ["k" for i in range(len(meshes))]
+
+    fig = sebplt.figure(style={"rows": 1280, "cols": 1280, "fontsize": 1})
+    ax = sebplt.add_axes(fig=fig, span=[0.1, 0.1, 0.85, 0.85])
+    for i in range(len(meshes)):
+        ax_add_mesh(ax, meshes[i], color=mesh_colors[i])
     ax.set_aspect("equal")
-    ax.set_xlabel(r"$x$/m")
-    ax.set_ylabel(r"$y$/m")
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.grid(color="k", linestyle="-", linewidth=0.66, alpha=0.1)
     fig.savefig(path)
+    sebplt.close(fig)
